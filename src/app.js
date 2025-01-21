@@ -3,15 +3,11 @@ const {adminAuth} = require("./middlewares/auth")
 const {connectDb} = require("./config/database")
 const User = require("./models/user")
 const app = express();
-
+     app.use(express.json());   //its a middleware which reads the json object and converts it into js object and it add that object to the req body
     app.post("/signup",async(req,res) => {
-        // Creating a new instaance of the User Model
-        const user = new User({
-            firstName:"Muskan",
-            lastName:"Maurya",
-            emailId:"muskan@gmail.com",
-            password:"muskan123"
-        });
+        console.log(req.body)
+        // Creating a new instance of the User Model
+        const user = new User(req.body);
         try{
         await user.save();           //return a promise (save method)
         res.send("User added sucessfully")
