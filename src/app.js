@@ -1,8 +1,15 @@
 const express = require("express");
+const {adminAuth} = require("./middlewares/auth")
+const {connectDb} = require("./config/database")
 const app = express();
-app.use("/hello",(req,res) => {      //Request handler
-    res.send("hello")
-})
-app.listen(8000,() => {
-    console.log("server is runnining 3000")
-});
+
+    connectDb()
+    .then(() => {
+        console.log("Database connected");
+        app.listen(8000,() => {
+            console.log("server is runnining 3000")
+        });
+        })
+    .catch((err) => {
+        console.error("Database not connected")
+    })
