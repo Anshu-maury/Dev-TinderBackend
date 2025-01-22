@@ -6,6 +6,7 @@ const {validateSignUpData} = require("./utils/validation")
 const User = require("./models/user");
 const cookieParser = require("cookie-parser");
 const jwt =require("jsonwebtoken");
+const {userAuth} = require("./middlewares/auth")
 const app = express();
      app.use(express.json());   //its a middleware which reads the json object and converts it into js object and it add that object to the req body
      app.use(cookieParser());
@@ -40,9 +41,11 @@ const app = express();
         const ispassowrdValid= await bcrypt.compare(password,user.password);
         if(ispassowrdValid){
             // Create a JWT token
-            const token = await jwt.sign({_id:user._id},"Muskan@20")
+            const token = await jwt.sign({_id:user._id},"Muskan@20",{expiresIn:"7d"})
             // Add the token to cookie and send the repsonse back to the user
-            res.cookie("token",token)    //saving the cookie
+            res.cookie("token",token,{
+                expires:new Date(Date.now() + 8 *3600000)
+            })    //saving the cookie
             res.send("login sucessfully")
         }
         else{
@@ -53,98 +56,18 @@ const app = express();
     }
     })
 
-    app.get("/profile",async(req,res) => {
+    app.get("/profile",userAuth,async(req,res) => {
         try{
-        const cookies = req.cookies;
-        const {token} = cookies;
-        if(!token){
-            throw new Error("Invalid Token")
-        }
-
-        // Validate the token
-        const decodedMessage = await jwt.verify(token,"Muskan@20");
-        const {_id} = decodedMessage;
-        console.log("Logged in user is "+ _id);
-        const user =await User.findById({_id});
-        if(!user){
-            throw new Error("User not found")
-        }
+       const user = req.user;
         res.send(user)
     }
     catch(err){
         res.status(400).send("Error: " + err.message)
     }
     })
-    // Get user by email
-    app.get("/user",async(req,res) => {
-        const userEmail = req.body.emailId;
-        try{
-        const user = await User.find({emailId:userEmail})
-        res.send(user);
-        }catch(err){
-            res.status(400).send("something went wrong")
-        }
-    })
-
-    // Get user by id
-    app.get("/user/id",async(req,res) => {
-        const userId = req.body._id;
-        try{
-        const user = await User.findById({_id:userId});
-        res.send(user)
-        }catch(err){
-            res.status(400).send("something went wrong")
-        }
-    })
-
-    // feed api which get all the user
-    app.get("/feed",async(req,res) => {
-        try{
-            const user = await User.find({})
-            res.send(user);
-            }catch(err){
-                res.status(400).send("something went wrong")
-            }
-    });
-
-    // Delete the user
-    app.delete("/user",async(req,res) => {
-        const id = req.body._id;
-        try{ 
-        const user = await User.findByIdAndDelete({_id:id})
-        res.send("User deleted sucessfully")
-        }catch(err){
-            res.status(400).send("something went wrong")
-        }
-        
-    })
-
-    // Update the user
-    app.patch("/user/:userId",async(req,res) => {
-        // const userId = req.body._id;
-        const userId = req.params?.userId;
-        const data = req.body;
-        // console.log(data)
-        try{
-            const ALLOWED_UPDATES = [
-                "photoUrl",
-                "about",
-                "gender",
-                "age",
-                "skills"
-            ]
-            const isUpdatedAllowed =Object.keys(data).every((k) => ALLOWED_UPDATES.includes(k));
-        if(!isUpdatedAllowed){
-            throw new Error("Update not Allowed")
-        }
-        if(data?.skills.length > 10){
-            throw new Error("Skills cannot be more than 10")
-        }
-          const user = await User.findByIdAndUpdate(userId,data,{returnDocument:'after',runValidators:true});  
-            res.send("User updated sucessfully")
-        }catch(err){
-            res.status(400).send("something went wrong"+ err.message)
-        }
+    app.post("/sendConnectionRequest",userAuth,(req,res)=> {
+        console.log("Sending the connection request");
+        res.send("Connection request send");
     })
     connectDb()
     .then(() => {
