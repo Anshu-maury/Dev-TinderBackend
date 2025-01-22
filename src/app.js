@@ -5,7 +5,6 @@ const User = require("./models/user")
 const app = express();
      app.use(express.json());   //its a middleware which reads the json object and converts it into js object and it add that object to the req body
     app.post("/signup",async(req,res) => {
-        console.log(req.body)
         // Creating a new instance of the User Model
         const user = new User(req.body);
         try{
@@ -31,7 +30,6 @@ const app = express();
     // Get user by id
     app.get("/user/id",async(req,res) => {
         const userId = req.body._id;
-        // console.log(userId)
         try{
         const user = await User.findById({_id:userId});
         res.send(user)
@@ -63,16 +61,30 @@ const app = express();
     })
 
     // Update the user
-    app.patch("/user",async(req,res) => {
-        const userId = req.body._id;
+    app.patch("/user/:userId",async(req,res) => {
+        // const userId = req.body._id;
+        const userId = req.params?.userId;
         const data = req.body;
         // console.log(data)
         try{
-          const user = await User.findByIdAndUpdate(userId,data,{returnDocument:'after'});
-          console.log(user);
+            const ALLOWED_UPDATES = [
+                "photoUrl",
+                "about",
+                "gender",
+                "age",
+                "skills"
+            ]
+            const isUpdatedAllowed =Object.keys(data).every((k) => ALLOWED_UPDATES.includes(k));
+        if(!isUpdatedAllowed){
+            throw new Error("Update not Allowed")
+        }
+        if(data?.skills.length > 10){
+            throw new Error("Skills cannot be more than 10")
+        }
+          const user = await User.findByIdAndUpdate(userId,data,{returnDocument:'after',runValidators:true});  
             res.send("User updated sucessfully")
         }catch(err){
-            res.status(400).send("something went wrong")
+            res.status(400).send("something went wrong"+ err.message)
         }
     })
     connectDb()
