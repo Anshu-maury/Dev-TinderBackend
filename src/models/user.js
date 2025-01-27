@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
     },
     photoUrl:{
         type:String,
-
+        default:"https://media.istockphoto.com/id/1164157572/vector/business-woman-silhouette-profile-sign-vector-female-flat-icon-women-head-and-face-lady-user.jpg?s=1024x1024&w=is&k=20&c=aQ4cm9RqIMaeKVaYkQT62ZKWvI_wMfglsMZlcRSnVEo="
     },
     about:{
         type:String,

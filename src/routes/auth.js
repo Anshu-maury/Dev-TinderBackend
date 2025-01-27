@@ -9,7 +9,7 @@ authRouter.post("/signup",async(req,res) => {
         // validation of data
         validateSignUpData(req);
         // Encrypt the passoword
-        const {firstName,lastName,emailId,password} = req.body;
+        const {firstName,lastName,emailId,password,photoUrl} = req.body;
         console.log(firstName)
         const passwordHash = await bcrypt.hash(password,10);
     // Creating a new instance of the User Model
@@ -18,9 +18,16 @@ authRouter.post("/signup",async(req,res) => {
         lastName,
         emailId,
         password: passwordHash,
+        photoUrl
     });
-    await user.save();           //return a promise (save method)
-    res.send("User added sucessfully")
+    const savedUser = await user.save();           //return a promise (save method)
+    const token = await savedUser.getJWT();
+        // Add the token to cookie and send the repsonse back to the user
+        res.cookie("token",token,{
+            expires:new Date(Date.now() + 8 *3600000)
+        })   
+
+    res.json({message:"User added sucessfully", data: savedUser});
     }
     catch(err){
         res.status(400).send("Error saving the user:" + err.message);
@@ -42,7 +49,7 @@ authRouter.post("/login",async(req,res) =>{
         res.cookie("token",token,{
             expires:new Date(Date.now() + 8 *3600000)
         })    //saving the cookie
-        res.send("login sucessfully")
+        res.send(user)
     }
     else{
         res.send("Invalid Credential")
